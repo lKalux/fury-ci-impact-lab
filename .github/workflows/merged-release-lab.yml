@@ -1,0 +1,44 @@
+name: Merged PR Release Lab
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  test-merged-release:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '#tag') && github.event.issue.number == 2 }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Inspect PR and create test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.comment.user.login }}
+          ASSOCIATION: ${{ github.event.comment.author_association }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          echo "AUTHOR=$AUTHOR"
+          echo "ASSOCIATION=$ASSOCIATION"
+
+          PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
+          echo "PR_STATE=$PR_STATE"
+
+          if [ "$PR_STATE" != "MERGED" ]; then
+            echo "PR_NOT_MERGED"
+            exit 1
+          fi
+
+          gh release create "lab-stable-$RUN_ID" \
+            --title "Lab Stable Release $RUN_ID" \
+            --notes "Controlled authorization test" \
+            --target main
+
+          echo "STABLE_RELEASE_CREATED=true"
