@@ -1,0 +1,3 @@
+ORIGEN: FORK EXTERNO
+REPOSITORIO: epalominoautoplan-dotcom/fury-ci-impact-lab
+PRUEBA: target_commitish
